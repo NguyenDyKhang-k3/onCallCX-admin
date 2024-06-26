@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Call Monitoring</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <script type="text/javascript" src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://pbx-stg.oncallcx.vn/cti/ancti/ancti.js"></script>
+</head>
+<body>
+<h1>Call Monitoring</h1>
+<table id="callTable" border="1">
+    <thead>
+    <tr>
+        <th>Agent</th>
+        <th>Customer</th>
+        <th>Call ID</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Rows will be dynamically added here -->
+    </tbody>
+</table>
+
+<script>
+    var agent = AnCti.newAgent();
+    var callTableBody = document.getElementById('callTable').getElementsByTagName('tbody')[0];
+    var webphone;
+
+    // Bắt đầu phiên ứng dụng
+    agent.startApplicationSession({
+        username: "diego@idb.com.vn",
+        password: "Abcd13579;;",
+    });
+
+    agent.on("applicationsessionstarted", (event) => {
+        console.log("Phiên ứng dụng bắt đầu");
+
+        // Lấy thiết bị webphone với địa chỉ SIP cụ thể
+        webphone = agent.getDevice("sip:1852@term.339");
+        if (webphone) {
+            try {
+                // Bắt đầu giám sát webphone
+                webphone.monitorStart({rtc: false});
+                console.log("Monitoring started for device 1852");
+            } catch (error) {
+                console.log("Error in monitorStart for device 1852:", error);
+            }
+        } else {
+            console.error("Error: webphone for sip:1852@term.339 is not defined");
+        }
+
+        // Lấy thiết bị bàn làm việc của agent với địa chỉ SIP cụ thể
+        let agentDeskphone = agent.getDevice("sip:1857@term.337");
+        if (agentDeskphone) {
+            try {
+                // Bắt đầu giám sát thiết bị bàn làm việc của agent
+                agentDeskphone.monitorStart({rtc: false});
+                console.log("Monitoring started for agent deskphone 1857");
+            } catch (error) {
+                console.log("Error in monitorStart for agent deskphone 1857:", error);
+            }
+        } else {
+            console.error("Error: agentDeskphone for sip:1857@term.337 is not defined");
+        }
+
+        // Khi có cuộc gọi, thêm vào bảng và hiển thị nút Join Call
+        agent.on('call', (callEvent) => {
+            let call = callEvent.call;
+            console.log(call);
+            console.log(call.localConnectionInfo);
+            if (call.localConnectionInfo === 'connected') {
+                console.log("Có cuộc gọi đến, ID cuộc gọi: ", call.callID);
+                addCallToTable(call, call.callID, "Agent 21", "Customer");
+            }
+        });
+
+        // Lắng nghe tất cả các sự kiện để ghi nhật ký
+        agent.on('event', (event) => {
+            console.log("Event received:", event);
+        });
+    });
+
+    function addCallToTable(call, callID, agentName, customerName) {
+        var row = callTableBody.insertRow();
+        row.insertCell(0).innerText = agentName;
+        row.insertCell(1).innerText = customerName;
+        row.insertCell(2).innerText = callID;
+
+        var actionCell = row.insertCell(3);
+        var joinButton = document.createElement('button');
+        joinButton.innerText = "Join Call";
+        joinButton.onclick = function () {
+            joinCall(call, callID);
+        };
+        actionCell.appendChild(joinButton);
+    }
+
+    async function joinCall(call, callID) {
+        if (!webphone || !call) {
+            console.error("Webphone or call is not defined");
+            return;
+        }
+
+        if (!call.device || !call.device.deviceID) {
+            console.error("Call device or deviceID is not defined");
+            return;
+        }
+
+        if (!webphone.deviceID) {
+            console.error("Webphone deviceID is not defined");
+            return;
+        }
+
+        // Sử dụng phương thức chính xác để tham gia cuộc gọi
+        const joinCallOptions = {
+            autoOriginate: "doNotPrompt",
+            audio: true,
+            video: false,
+            participationType: "Listen"
+        };
+
+        console.log(call.device.deviceID);
+        console.log(webphone.deviceID);
+
+        try {
+            await webphone.joinCall(
+                {
+
+                    callID: callID,
+                    device: {
+                        deviceID: call.device.deviceID
+                    },
+                    joiningDevice: webphone.deviceID
+                },
+                joinCallOptions
+            );
+            console.log("Đã tham gia cuộc gọi với ID: ", callID);
+        } catch (error) {
+            console.error("Error while joining the call:", error);
+        }
+    }
+</script>
+</body>
+</html>

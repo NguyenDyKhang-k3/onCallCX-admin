@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>CTI Admin Panel</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <script type="text/javascript" src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://pbx-stg.oncallcx.vn/cti/ancti/ancti.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<h1>CTI Admin Panel</h1>
+<table id="callTable" border="1">
+    <thead>
+    <tr>
+        <th class="monitoringTableHeader">ID</th>
+        <th class="monitoringTableHeader">Calling Number</th>
+        <th class="monitoringTableHeader">Called Number</th>
+        <th class="monitoringTableHeader">Direction</th>
+        <th class="monitoringTableHeader">Duration</th>
+        <th class="monitoringTableHeader">Actions</th>
+    </tr>
+    </thead>
+    <tbody id="callList">
+    </tbody>
+</table>
+
+<script src="/js/cti_admin.js"></script>
+<script src="/js/zendeskidb.js"></script>
+</body>
+</html>
